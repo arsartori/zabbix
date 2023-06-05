@@ -12,6 +12,7 @@ services:
       MYSQL_PASSWORD: zabbix
       ZBX_CACHESIZE: 32M
     restart: always
+    
   zabbix-web:
     container_name: zabbix-web
     image: zabbix/zabbix-web-nginx-mysql:alpine-5.0.30
@@ -26,6 +27,7 @@ services:
     restart: always
     depends_on:
       - zabbix-server
+      
   zabbix-agent:
     container_name: zabbix-agent
     image: zabbix/zabbix-agent:alpine-5.0.30
@@ -35,3 +37,8 @@ services:
       ZBX_PASSIVESERVERS: <Server Name/IP>
       ZBX_ACTIVESERVERS: <Server Name/IP>
       ZBX_HOSTNAME: <Agent Hostname>
+      
+zabbix-snmptraps:
+  image: zabbix/zabbix-snmptraps:alpine-5.0.30
+  ports:
+   - "162:1162/udp"
