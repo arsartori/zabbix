@@ -20,8 +20,6 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - /opt/docker/zabbix/ssl/apache2:/etc/ssl/apache2:ro
-      - /opt/docker/zabbix/modules/:/usr/share/zabbix/modules/:ro
 
   zabbix-agent:
     container_name: zabbix-agent
@@ -32,9 +30,3 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ./zbx_env/etc/zabbix/zabbix_agentd.d:/etc/zabbix/zabbix_agentd.d:ro
-      - ./zbx_env/var/lib/zabbix/modules:/var/lib/zabbix/modules:ro
-      - ./zbx_env/var/lib/zabbix/enc:/var/lib/zabbix/enc:ro
-      - ./zbx_env/var/lib/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
-    privileged: true
-    pid: "host"
