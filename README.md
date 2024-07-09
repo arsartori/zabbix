@@ -1,4 +1,4 @@
-# Zabbix 5
+# Zabbix 6.0
 
 ### Criar um banco de dados
     create database zabbix character set utf8 collate utf8_bin;
