@@ -5,3 +5,6 @@
     grant all privileges on zabbix.* to zabbix@localhost identified by 'zabbix';
 ### Iniciar os containers
     docker compose up -d
+### Recarregar o cache
+	zabbix_server -R config_cache-reload
+
