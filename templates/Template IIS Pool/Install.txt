@@ -1,0 +1,12 @@
+IIS Sites and Application pool state monitoring Popular
+
+Template for discovering IIS sites and application pool on hosts and monitoring the state after  (stopped or started ) automatically.
+
+You need to install zabbix agent on hosts that you intend to monitor.After that copy these four powershell scripts and update zabbix agent conf file adding to userparameter key the following line :
+
+UserParameter=apppool.discovery,powershell -NoProfile -ExecutionPolicy Bypass -File "C:\zabbix_agents_3.0.0.win\get_apppool.ps1"
+UserParameter=apppool.state[*],powershell -NoProfile -ExecutionPolicy Bypass -File C:\zabbix_agents_3.0.0.win\get_apppoolstate.ps1 "$1"
+UserParameter=site.discovery,powershell -NoProfile -ExecutionPolicy Bypass -File "C:\zabbix_agents_3.0.0.win\get_sites.ps1"
+UserParameter=site.state[*],powershell -NoProfile -ExecutionPolicy Bypass -File C:\zabbix_agents_3.0.0.win\get_sitestate.ps1 "$1"
+
+As you can see ,it showed the path where install powershell script.If you like you could change it.

@@ -1,0 +1,2 @@
+UserParameter=cert.discovery[*],powershell -NoProfile -ExecutionPolicy Bypass -File C:\zabbix\get_cert.ps1 "$1"
+UserParameter=cert.local.exp[*],powershell -NoProfile -ExecutionPolicy Bypass -File C:\zabbix\get_cert_date.ps1 "$1"

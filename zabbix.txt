@@ -1,0 +1,136 @@
+# Create the Zabbix Data Persistent Volumes
+sudo mkdir /zabbix-data
+sudo mkdir /zabbix-data/alertscripts
+sudo mkdir /zabbix-data/externalscripts
+sudo mkdir /zabbix-data/export
+sudo mkdir /zabbix-data/modules
+sudo mkdir /zabbix-data/enc
+sudo mkdir /zabbix-data/ssh_keys
+sudo mkdir /zabbix-data/mibs
+sudo mkdir /zabbix-data/snmptraps
+sudo mkdir -p /zabbix-nginx/nginx
+sudo mkdir /zabbix-nginx/modules
+sudo mkdir /zabbix-mysql
+sudo chmod 777 -R /zabbix-data/
+sudo chmod 777 -R /zabbix-nginx/
+sudo chmod 777 /zabbix-mysql/
+
+docker network create --subnet 172.20.0.0/16 --ip-range 172.20.240.0/20 zabbix-net
+
+docker run --name mysql-server -t \
+      -e MYSQL_DATABASE="zabbixdb" \
+      -e MYSQL_USER="zabbix" \
+      -e MYSQL_PASSWORD="Passw0rd" \
+      -e MYSQL_ROOT_PASSWORD="StrongPassword" \
+      --network=zabbix-net \
+      -d mysql:8.0 \
+      --character-set-server=utf8 --collation-server=utf8_bin \
+      --default-authentication-plugin=mysql_native_password
+	  
+docker run --name zabbix-server-mysql -t \
+      -e DB_SERVER_HOST="mysql-server" \
+      -e MYSQL_DATABASE="zabbixdb" \
+      -e MYSQL_USER="zabbix" \
+      -e MYSQL_PASSWORD="Passw0rd" \
+      -e MYSQL_ROOT_PASSWORD="StrongPassword" \
+      -e ZBX_JAVAGATEWAY="zabbix-java-gateway" \
+      --network=zabbix-net \
+      -p 10051:10051 \
+      --restart unless-stopped \
+      -d zabbix/zabbix-server-mysql:alpine-6.0-latest
+	  
+docker run --name zabbix-web-nginx-mysql -t \
+      -e ZBX_SERVER_HOST="zabbix-server-mysql" \
+      -e DB_SERVER_HOST="mysql-server" \
+      -e MYSQL_DATABASE="zabbixdb" \
+      -e MYSQL_USER="zabbix" \
+      -e MYSQL_PASSWORD="Passw0rd" \
+      -e MYSQL_ROOT_PASSWORD="StrongPassword" \
+      --network=zabbix-net \
+      -p 80:8080 \
+      --restart unless-stopped \
+      -d zabbix/zabbix-web-nginx-mysql:alpine-6.0-latest
+	  
+vim docker-compose.yml
+
+version: '3.5'
+services:
+ mysql-server:
+  image: mysql:8.0
+  networks:
+   - zbx_net
+  command:
+   - mysqld
+   - --character-set-server=utf8
+   - --collation-server=utf8_bin
+   - --default-authentication-plugin=mysql_native_password
+  environment:
+   - MYSQL_USER=zabbix
+   - MYSQL_DATABASE=zabbixdb
+   - MYSQL_PASSWORD=PasswOrd
+   - MYSQL_ROOT_PASSWORD=StrongPassword
+   - ZBX_JAVAGATEWAY=zabbix-java-gateway
+  volumes:
+   - /zabbix-mysql:/var/lib/mysql:rw
+ zabbix-server-mysql:
+  image: zabbix/zabbix-server-mysql:alpine-latest
+  networks:
+   - zbx_net
+  ports:
+   - 10051:10051
+  volumes:
+   - /etc/localtime:/etc/localtime:ro
+   - /etc/timezone:/etc/timezone:ro 
+   - /zabbix-data/alertscripts:/usr/lib/zabbix/alertscripts:ro
+   - /zabbix-data/externalscripts:/usr/lib/zabbix/externalscripts:ro
+   - /zabbix-data/export:/var/lib/zabbix/export:rw
+   - /zabbix-data/modules:/var/lib/zabbix/modules:ro
+   - /zabbix-data/enc:/var/lib/zabbix/enc:ro
+   - /zabbix-data/ssh_keys:/var/lib/zabbix/ssh_keys:ro
+   - /zabbix-data/mibs:/var/lib/zabbix/mibs:ro
+   - /zabbix-data/snmptraps:/var/lib/zabbix/snmptraps:rw
+  environment:
+   - DB_SERVER_HOST=mysql-server
+   - MYSQL_DATABASE=zabbixdb
+   - MYSQL_USER=zabbix
+   - MYSQL_PASSWORD=Passw0rd
+   - MYSQL_ROOT_PASSWORD=StrongPassword
+   - ZBX_JAVAGATEWAY=zabbix-java-gateway
+
+  depends_on:
+   - mysql-server
+
+ zabbix-web-nginx-mysql:
+  image: zabbix/zabbix-web-nginx-mysql:alpine-6.0-latest
+  networks:
+   - zbx_net
+  ports:
+   - 80:8080
+   - 443:8443
+  volumes:
+   - /etc/localtime:/etc/localtime:ro
+   - /etc/timezone:/etc/timezone:ro
+   - /zabbix-nginx/nginx:/etc/ssl/nginx:ro
+   - /zabbix-nginx/modules/:/usr/share/zabbix/modules/:ro
+  environment:
+   - ZBX_SERVER_HOST=zabbix-server-mysql
+   - DB_SERVER_HOST=mysql-server
+   - MYSQL_DATABASE=zabbixdb
+   - MYSQL_USER=zabbix
+   - MYSQL_PASSWORD=Passw0rd
+   - MYSQL_ROOT_PASSWORD=StrongPassword
+  depends_on:
+   - mysql-server
+   - zabbix-server-mysql
+ zabbix-java-gateway:
+  image: zabbix/zabbix-java-gateway:alpine-6.0-latest
+  networks:
+   - zbx_net
+  ports:
+   - 10052:10052
+networks:
+ zbx_net:
+   driver: bridge
+   
+   
+   
